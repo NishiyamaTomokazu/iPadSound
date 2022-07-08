@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html>
+  <head>
+	<!-- Global site tag (gtag.js) - Google Analytics -->
+	<script async src="https://www.googletagmanager.com/gtag/js?id=G-HJ1X0QS648"></script>
+	<script>
+	  window.dataLayer = window.dataLayer || [];
+	  function gtag(){dataLayer.push(arguments);}
+	  gtag('js', new Date());
+
+	  gtag('config', 'G-HJ1X0QS648');
+	</script>
+    <title>オーロラクロック2N制御アプリ</title>
+    <link href="css/design.css" rel="stylesheet" type="text/css">
+    <link href="css/bootstrap-4.3.1.css" rel="stylesheet" type="text/css">
+	<script src="js/jquery.min.js1.7.2.js"></script><!--ドラッグドロップ読み込み用 -->
+  </head>
+  <body style="padding-top: 70px">
+    <!-- Blocklyのライブラリ -->
+    <script src="js/blockly_compressed.js"></script>
+    <script src="js/blocks_compressed.js"></script>
+    <script src="js/javascript_compressed.js"></script>
+    <script src="msg/js/ja.js"></script>
+    <!-- 自作ブロックの定義 -->
+    <script src="js/myblock_Stub.js"></script>
+    <script src="js/myblock_Definition.js"></script>
+    <script src="js/workspace.js" defer></script>
+    <script src="js/function.js"></script>
+    <script src="js/demo.js"></script>
+    <script src="js/function_share.js"></script>
+    <script src="js/sendSound.js"></script>
+    <!-- ワークスペースのエリア -->
+	<div class="container-fluid" id="droppable">  
+		
+	<div id="printhead">
+	<div class="row justify-content-center">
+	<input type="text" size="3" id="print_nen">年　
+	<input type="text" size="3" id="print_kumi">組　
+	<input type="text" size="3" id="print_ban">番　
+	 名前：<input type="text" id="print_name" size="20">
+	</div><p></p>
+	<div class="row justify-content-center">
+	 <div class="col-sm-8">タイトル：<input type="text" id="print_title" size="80"></div>
+	</div>
+	<div class="row justify-content-center">
+		<div class="col-sm-5">構想：<br><div class="printwaku" id="print-koso"></div><textarea class="text-height-5" id="print-text-koso"></textarea></div>
+		<div class="col-sm-5">仕様：<br><div class="printwaku" id="print-siyo"></div><textarea class="text-height-5" id="print-text-siyo"></textarea></div>
+	</div>
+	<div class="row justify-content-center">
+		<div class="col-sm-5">工夫点：<br><div class="printwaku" id="print-kuhu"></div><textarea class="text-height-5" id="print-text-kuhu"></textarea></div>
+		<div class="col-sm-5">感想：<br><div class="printwaku" id="print-kanso"></div><textarea class="text-height-5" id="print-text-kanso"></textarea></div>
+	</div>
+	<div class="row justify-content-center">
+		<a class="printbtn" id="prtbtn1" href="#" onClick="printBlock()">印刷</a>
+		<a class="printbtn" id="prtbtn2" href="#" onClick="printNoDisplay()">キャンセル</a>
+	</div>
+	</div>
+		
+    <div class="row justify-content-center">
+		<img class="img-center .img-responsive" src="img/sw1.png" alt=""/>を押しながら
+		<img class="img-center .img-responsive" src="img/sw2.png" alt=""/>にする
+		<img class="img-center .img-responsive" src="img/sw3.png" alt=""/>を離す
+		<img class="img-center .img-responsive" src="img/sw4.png" alt=""/>「接続処理」をする
+    </div>
+	
+    <div class="row justify-content-center">
+	  <div class="col" id="blocklyDiv" style="height: 650px; width: 100%;"></div>	
+	  <div class="col-sm-4 backcolor-green">
+		  <div class="img-center"><img class="img-center .img-responsive" src="img/uc7.png" alt=""/></div>
+		  <div class="img-center">
+		    プログラミング手順
+		  </div>
+		  <div class="connectcheck font13">
+				  ①電池を入れ、ケーブルを接続しSWを押しながら電源をONにする（赤が点灯した後SWを離す）<br>
+				  ②iPadの音量を最大にする<br>
+				  ③「接続処理」を押し、LEDが紫点灯することを確認する<br>　（<a href="help/connection_ipad.pdf" target="_blank">詳しくはこちら</a>）<br>
+				  ④プログラムを作成する<br>
+				  ⑤「転送」を押しプログラムを転送する<br>
+				  ⑥「実行」を押し転送したプログラムを実行する
+		  </div>
+	  </div>
+    </div>
+	<div class="row">
+		<!--style="display:none;"-->
+		<form name="form2"><textarea style="display:none;" name='textarea1' id='proText'>プログラム</textarea></form>
+		<form name="form3"><textarea style="display:none;" name='textarea2' id='sendText'>転送データ</textarea></form>  
+		<form name="form4"><textarea style="display:none;" name='textarea3' id='shareText'>共通データ</textarea></form>
+		<form name="form5"><textarea style="display:none;" name='textarea4' id='xmlText'>XML</textarea></form>		
+		<form name="form6"><textarea style="display:none;" name='textarea5' id='arrayText'>ipad</textarea></form>	
+    </div>
+		
+    </div>
+
+    <!-- 本体へ保存したファイルの読み込み画面 -->
+	<div id="restoreModal" class="modal" onclick="pressCancelRestoreBlocks(event)">
+      <div class="modalWindow" style="width: 480px">
+        <div class="modalHeader">
+          開きたいプログラムを選択してください。
+        </div>
+        <ul id="restoreList">
+        </ul>
+        <div class="modalFooter">
+          <a onclick="cancelRestoreBlocks()">キャンセル</a>
+        </div>
+      </div>
+    </div>  
+
+    <!-- ツールボックスの定義 -->
+<xml xmlns="https://developers.google.com/blockly/xml" id="toolbox" style="display: none">
+  <category name="制御" colour="#ffbf00">
+    <block type="start"></block>
+    <!-- <block type="end"></block> -->
+    <block type="loop"></block>
+    <block type="if_yes"></block>
+    <block type="if_else"></block>
+    <block type="if_block_swon"></block>
+    <block type="if_block_swoff"></block>
+    <block type="if_block_light"></block>
+    <block type="if_block_dark"></block>    
+    <block type="if_block_tempup"></block>
+    <block type="if_block_tempdown"></block>
+    <block type="if_block_tempeq"></block>
+    <block type="if_block_henup"></block>
+    <block type="if_block_hendown"></block>
+    <block type="if_block_heneq"></block>
+  </category>
+  <category name="LED 点灯" colour="#00aaff">
+    <block type="led_red">
+      <field name="ledtime">1</field>
+    </block>
+    <block type="led_green">
+      <field name="ledtime">1</field>
+    </block>
+    <block type="led_blue">
+      <field name="ledtime">1</field>
+    </block>
+    <block type="led_yellow">
+      <field name="ledtime">1</field>
+    </block>
+    <block type="led_purple">
+      <field name="ledtime">1</field>
+    </block>
+    <block type="led_lightblue">
+      <field name="ledtime">1</field>
+    </block>
+    <block type="led_white">
+      <field name="ledtime">1</field>
+    </block>
+    <block type="led_off">
+      <field name="ledtime">1</field>
+    </block>
+    <block type="led_point">
+      <field name="color">#ff0000</field>
+      <field name="time">1</field>
+    </block>
+    <block type="led_rgb">
+    </block>
+  </category>
+  <category name="LED フェード" colour="#92117D">
+    <block type="fade_red">
+      <field name="fade">f_in</field>
+    </block>
+    <block type="fade_green">
+      <field name="fade">f_in</field>
+    </block>
+    <block type="fade_blue">
+      <field name="fade">f_in</field>
+    </block>
+    <block type="fade_yellow">
+      <field name="fade">f_in</field>
+    </block>
+    <block type="fade_purple">
+      <field name="fade">f_in</field>
+    </block>
+    <block type="fade_lightblue">
+      <field name="fade">f_in</field>
+    </block>
+    <block type="fade_white">
+      <field name="fade">f_in</field>
+    </block>
+  </category>
+  <category name="LED 連続点灯" colour="#00ff80">
+    <block type="led_conti_red"></block>
+    <block type="led_conti_green"></block>
+    <block type="led_conti_blue"></block>
+    <block type="led_conti_yellow"></block>
+    <block type="led_conti_purple"></block>
+    <block type="led_conti_lightblue"></block>
+    <block type="led_conti_white"></block>
+    <block type="led_conti_off"></block>
+  </category>
+  <category name="バックライト" colour="#8a97b8">
+    <block type="backlight_time">
+      <field name="backlightlight">100</field>
+      <field name="backlighttime">1</field>
+    </block>
+    <block type="backlight_conti"></block>
+    <block type="backlight_off"></block>
+  </category>
+  <category name="タイマ" colour="#ff8c1a">
+    <block type="timer">
+      <field name="timertime">1</field>
+    </block>
+    <block type="timer_sound">
+      <field name="timertime">1</field>
+    </block>
+    <block type="timer_sw">
+      <field name="timertime">1</field>
+    </block>
+    <block type="timer_light">
+      <field name="timertime">1</field>
+      <field name="timerlight">50</field>
+    </block>
+    <block type="timer_dark">
+      <field name="timertime">1</field>
+      <field name="timerlight">50</field>
+    </block>
+    <block type="timer_temp">
+      <field name="timertime">1</field>
+      <field name="timertemp">25</field>
+    </block>
+  </category>
+  <category name="信号待ち" colour="#5cb1d6">
+    <block type="wait_sound"></block>
+    <block type="wait_sw"></block>
+    <block type="wait_light">
+      <field name="waitlight">50</field>
+    </block>
+    <block type="wait_dark">
+      <field name="waitlight">50</field>
+    </block>
+    <block type="wait_temp">
+      <field name="waitlight">25</field>
+    </block>
+    <block type="wait_signal"></block>
+    <block type="wait_alerm"></block>
+  </category>
+  <category name="サウンド" colour="#cf63cf">
+    <block type="sound1"></block>
+    <block type="sound2"></block>
+    <block type="sound3"></block>
+    <block type="soundplay"></block>
+  </category>
+  <category name="出力" colour="#ff7385">
+    <block type="outputSignal"></block>
+    <block type="outputdc_time"></block>
+    <block type="outputdc_cont"></block>
+    <block type="outputdc_off"></block>
+    <block type="outputmame_time"></block>
+    <block type="outputmame_cont"></block>
+    <block type="outputmame_off"></block>
+  </category>
+  <category name="変数" colour="#a34a1d">
+    <block type="input_variable"></block>
+  </category>
+</xml>
+    <script>
+      //Blocklyをdivにはめ込み
+      var toolbox = document.getElementById("toolbox");
+      var options = { 
+	      toolbox : toolbox, 
+	      maxBlocks : Infinity,
+	      css : true, 
+	      sounds : false, 
+      };
+      var workspace = Blockly.inject('blocklyDiv', options);
+      
+		document.getElementById("printhead").style.display ="none";
+		document.getElementById("print-koso").style.display ="none";
+		document.getElementById("print-siyo").style.display ="none";
+		document.getElementById("print-kuhu").style.display ="none";
+		document.getElementById("print-kanso").style.display ="none";
+		//自動保存したプログラムの呼び出し
+  		autosavefile_read();
+		
+	    //ファイル読み込み用
+		window.addEventListener('DOMContentLoaded', function(){
+	    var ele = document.getElementById("readfile");
+	    ele.addEventListener('change', function(ev){
+			var file = ev.target.files[0];
+			var filename = file.name.split('.');
+			var reader = new FileReader();
+			if (filename[1] == "cuc7" || filename[1] == "cuc7f" || filename[1] == "cuc7w"){
+			  reader.readAsText(file, 'UTF-8');
+			}
+			reader.onload = function(e){
+				if (reader.result.substr(0,4) == "<xml" ){
+					uploadCode(reader.result);		
+				}
+				else{
+					var readdata = event.target.result.substring(event.target.result.indexOf("START"));	
+					sharelist_to_program(readdata);
+				}			  
+				document.getElementById("readfile").value = "";
+			}
+	    }, false);
+		});
+		
+		//保存ファイルのドラッグドロップ処理
+		$(function() {
+			var droppable = $("#droppable");
+
+			// File API が使用できない場合は諦めます.
+			if(!window.FileReader) {
+			  alert("File API がサポートされていません。");
+			  return false;
+			}
+
+			// イベントをキャンセルするハンドラです.
+			var cancelEvent = function(event) {
+				event.preventDefault();
+				event.stopPropagation();
+				return false;
+			}
+
+			// dragenter, dragover イベントのデフォルト処理をキャンセルします.
+			droppable.bind("dragenter", cancelEvent);
+			droppable.bind("dragover", cancelEvent);
+
+			// ドロップ時のイベントハンドラを設定します.
+			var handleDroppedFile = function(event) {
+				// ファイルは複数ドロップされる可能性がありますが, ここでは 1 つ目のファイルを扱います.
+				var file = event.originalEvent.dataTransfer.files[0];
+				if (strSplit(file.name,1,".") == "cuc7f" || strSplit(file.name,1,".") == "cuc7" || strSplit(file.name,1,".") == "cuc7w"){
+					// ファイルの内容は FileReader で読み込みます.
+					var fileReader = new FileReader();					
+					fileReader.onload = function(event) {
+					  // event.target.result に読み込んだファイルの内容が入っています.		
+						if (strSplit(file.name,1,".") == "cuc7"){
+					  		uploadCode(event.target.result);
+						}
+						else{
+							var readdata = event.target.result.substring(event.target.result.indexOf("START"));	
+							if (readdata.indexOf('START') == 0){								
+					  			sharelist_to_program(readdata);
+							}
+						}
+					}
+					fileReader.readAsText(file);
+					// デフォルトの処理をキャンセルします.
+					cancelEvent(event);
+					return false;
+				}
+				else {
+					alert("ドロップされたファイルはこのモードで保存されたものではありません。");
+					return false;
+				}
+			}
+			// ドロップ時のイベントハンドラを設定します.
+			droppable.bind("drop", handleDroppedFile);
+      });
+    </script>
+	  
+  <nav class="navbar fixed-top navbar-expand-lg navbar-light bg-light">オーロラクロック2N(iPad)
+  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent1" aria-controls="navbarSupportedContent1" aria-expanded="false" aria-label="Toggle navigation"> <span class="navbar-toggler-icon"></span> </button>
+  <div class="collapse navbar-collapse" id="navbarSupportedContent1">
+    <ul class="navbar-nav mx-auto">
+      <li class="nav-item dropdown">
+		  <a class="nav-link dropdown-toggle" href="#"  id="navbarDropdown1" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">ファイル</a>
+          <div class="dropdown-menu" aria-labelledby="navbarDropdown1">
+			<a class="dropdown-item aback" ontouchstart="" onclick="saveCode()" href="#">ブラウザへ保存</a>
+			<a class="dropdown-item aback" ontouchstart="" onclick="restoreBlocks()" href="#">ブラウザから読み込み</a>
+            <div class="dropdown-divider"></div>
+			<a class="dropdown-item aback" ontouchstart="" onclick="downloadCode_ipad()" href="#" id="filesave">ファイルへ保存</a>
+			<label class="dropdown-item read_label aback" ontouchstart=""><form name="test">ファイルから読み込み<input type="file" id="readfile" accept=".cuc7f,.cuc7,.cuc7w" hidden></form></label>
+			<div class="dropdown-divider"></div>
+			<a class="dropdown-item aback" ontouchstart="" onclick="read_demo(1)" href="#">デモ1(順次)</a>
+			<a class="dropdown-item aback" ontouchstart="" onclick="read_demo(2)" href="#">デモ2(順次)</a>
+			<a class="dropdown-item aback" ontouchstart="" onclick="read_demo(3)" href="#">デモ3(反復)</a>
+			<a class="dropdown-item aback" ontouchstart="" onclick="read_demo(4)" href="#">デモ4(分岐)</a>
+			<a class="dropdown-item aback"  ontouchstart=""onclick="read_demo(5)" href="#">初期プログラム</a>
+          </div>
+      </li>
+	  <li class="nav-item"> <a class="nav-link aback" ontouchstart="" href="#" onclick="connect_iPad()">接続処理　</a></li>
+      <li class="nav-item"> <a class="nav-link aback" ontouchstart="" href="#" onclick="sendHID_iPad()">　転送　　</a></li>
+      <li class="nav-item"> <a class="nav-link aback" ontouchstart="" href="#" onclick="runHID_iPad()">　実行　　</a></li>
+	  <li class="nav-item dropdown">
+		  <a class="nav-link dropdown-toggle" href="#"  id="navbarDropdown1" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">その他</a>
+          <div class="dropdown-menu" aria-labelledby="navbarDropdown1">
+			<a class="dropdown-item aback" ontouchstart="" onclick="printDisplay()" href="#">レポート作成</a>
+			<div class="dropdown-divider"></div>
+			<a class="dropdown-item aback" ontouchstart="" onclick="disp_memory()" href="#">消費メモリ表示</a>
+          </div>
+      </li>
+	  <li class="nav-item dropdown">
+		  <a class="nav-link dropdown-toggle" href="#"  id="navbarDropdown1" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">ヘルプ</a>
+		  <div class="dropdown-menu" aria-labelledby="navbarDropdown1">
+			<a class="dropdown-item aback" ontouchstart="" href="help/comm_kei_b.pdf" target="_blank">コマンド一覧</a>
+			<div class="dropdown-divider"></div>
+			<a class="dropdown-item aback" ontouchstart="" href="help/operationipad.pdf" target="_blank">ヘルプ</a>
+			<a class="dropdown-item aback" ontouchstart="" href="help/connection_ipad.pdf" target="_blank">接続処理について</a>
+		  </div>
+	  </li>
+    </ul>
+  </div>
+</nav>
+<script src="js/jquery-3.4.1.min.js" type="text/javascript"></script>
+<script src="js/popper.min.js" type="text/javascript"></script>
+<script src="js/bootstrap-4.3.1.js" type="text/javascript"></script>
+	  
+  </body>
+</html>
